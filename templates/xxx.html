@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PDF Converter Pro — Multi-type Upload</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JSZip for client-side zipping -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body{font-family:'Inter',sans-serif}
+    .gradient-bg{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+    .file-drop-zone{border:2px dashed #cbd5e0;transition:all .3s ease}
+    .file-drop-zone.dragover{border-color:#667eea;background:#f7fafc}
+    .conversion-card{transition:all .3s ease}
+    .conversion-card:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(0,0,0,.1)}
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="gradient-bg text-white py-6">
+    <div class="container mx-auto px-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+          <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
+        </div>
+        <h1 class="text-2xl font-bold">PDF Converter Pro</h1>
+      </div>
+      <nav class="hidden md:flex space-x-6">
+        <a class="hover:text-gray-200" href="#">Home</a>
+        <a class="hover:text-gray-200" href="#">Tools</a>
+        <a class="hover:text-gray-200" href="#">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-12">
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-bold text-gray-800 mb-4">Upload Campur File — Langsung Konversi</h2>
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">Sekarang Anda bisa unggah DOCX, XLSX, PPTX, PNG, JPG, TXT, HTML, dan PDF sekaligus — tanpa batasan harus sama ekstensi.</p>
+    </div>
+
+    <!-- Upload -->
+    <div class="max-w-4xl mx-auto mb-12">
+      <div id="dropZone" class="file-drop-zone bg-white rounded-xl p-12 text-center shadow-lg">
+        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-2">Tarik & letakkan file di sini atau klik untuk pilih</h3>
+        <p class="text-gray-500">Mendukung: DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, TXT, HTML, PDF</p>
+        <input id="fileInput" type="file" multiple class="hidden"/>
+        <button class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 mt-4" onclick="browseFiles()">Pilih File</button>
+      </div>
+    </div>
+
+    <!-- Daftar File -->
+    <div id="processingArea" class="max-w-5xl mx-auto hidden">
+      <div class="bg-white rounded-xl shadow-lg p-8">
+        <h3 class="text-xl font-semibold text-gray-800 mb-6">File Siap Diproses</h3>
+        <div id="fileList" class="space-y-3 mb-6"></div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium" onclick="convertFiles()">Konversi Semua</button>
+          <button class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-3 rounded-lg font-medium" onclick="clearFiles()">Bersihkan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fitur -->
+    <div class="max-w-6xl mx-auto mt-16">
+      <h3 class="text-2xl font-bold text-gray-800 text-center mb-8">Kenapa pilih kami?</h3>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="bg-blue-100 w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"><svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z"/></svg></div>
+          <h4 class="font-semibold text-gray-800 mb-2">Aman & Privat</h4>
+          <p class="text-gray-600">File diproses aman dan dihapus otomatis.</p>
+        </div>
+        <div class="text-center">
+          <div class="bg-green-100 w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"><svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg></div>
+          <h4 class="font-semibold text-gray-800 mb-2">Kualitas Tinggi</h4>
+          <p class="text-gray-600">Format & tata letak tetap rapi.</p>
+        </div>
+        <div class="text-center">
+          <div class="bg-purple-100 w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"><svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6Z"/></svg></div>
+          <h4 class="font-semibold text-gray-800 mb-2">Proses Cepat</h4>
+          <p class="text-gray-600">Mesin konversi dioptimalkan.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-gray-800 text-white py-8 mt-16 text-center">
+    <p>© 2025 PDF Converter Pro. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // === State ===
+    let selectedFiles = []; // [{file: File, action: string}]
+
+    const ACTIONS = [
+      { value: 'docx_to_pdf', label: 'DOC/DOCX → PDF', exts: ['doc','docx'] },
+      { value: 'excel_to_pdf', label: 'XLS/XLSX → PDF', exts: ['xls','xlsx'] },
+      { value: 'powerpoint_to_pdf', label: 'PPT/PPTX → PDF', exts: ['ppt','pptx'] },
+      { value: 'image_to_pdf', label: 'JPG/PNG → PDF', exts: ['jpg','jpeg','png'] },
+      { value: 'text_to_pdf', label: 'TXT → PDF', exts: ['txt'] },
+      { value: 'html_to_pdf', label: 'HTML → PDF', exts: ['html','htm'] },
+      { value: 'pdf_to_image', label: 'PDF → Gambar', exts: ['pdf'] },
+    ];
+
+    const EXT_TO_ACTION = ACTIONS.reduce((acc,a)=>{a.exts.forEach(e=>acc[e]=a.value);return acc;},{});
+
+    // === Helpers ===
+    function detectActionByName(name){
+      const ext = (name.split('.').pop()||'').toLowerCase();
+      return EXT_TO_ACTION[ext] || '';
+    }
+
+    function browseFiles(){ document.getElementById('fileInput').click(); }
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('dragover', e=>{ e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', ()=> dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e=>{
+      e.preventDefault(); dropZone.classList.remove('dragover');
+      handleFiles(Array.from(e.dataTransfer.files));
+    });
+    fileInput.addEventListener('change', e=> handleFiles(Array.from(e.target.files)));
+
+    function handleFiles(files){
+      const mapped = files.map(f=>({ file: f, action: detectActionByName(f.name) }));
+      selectedFiles = selectedFiles.concat(mapped);
+      renderList();
+      document.getElementById('processingArea').classList.remove('hidden');
+    }
+
+    function removeFile(index){ selectedFiles.splice(index,1); renderList(); if(!selectedFiles.length){document.getElementById('processingArea').classList.add('hidden');} }
+    function clearFiles(){ selectedFiles=[]; renderList(); document.getElementById('processingArea').classList.add('hidden'); fileInput.value=''; }
+
+    function renderList(){
+      const list = document.getElementById('fileList');
+      list.innerHTML = '';
+      selectedFiles.forEach((item,idx)=>{
+        const kb = (item.file.size/1024/1024).toFixed(2);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col md:flex-row md:items-center md:justify-between p-4 bg-gray-50 rounded-lg';
+        wrapper.innerHTML = `
+          <div class="flex items-center mb-3 md:mb-0">
+            <svg class="w-8 h-8 text-blue-600 mr-3" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
+            <div>
+              <p class="font-medium text-gray-800">${item.file.name}</p>
+              <p class="text-sm text-gray-500">${kb} MB</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="text-sm text-gray-600">Aksi:</label>
+            <select class="border rounded px-3 py-2" onchange="overrideAction(${idx}, this.value)">
+              <option value="">Pilih jenis konversi…</option>
+              ${ACTIONS.map(a=>`<option value="${a.value}" ${item.action===a.value?'selected':''}>${a.label}</option>`).join('')}
+            </select>
+            <button class="text-red-500 hover:text-red-700" title="Hapus" onclick="removeFile(${idx})">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
+            </button>
+          </div>`;
+        list.appendChild(wrapper);
+      });
+      if(!selectedFiles.length){ list.innerHTML = '<p class="text-gray-500">Belum ada file.</p>'; }
+    }
+
+    function overrideAction(index, value){ selectedFiles[index].action = value; }
+
+    async function convertFiles(){
+      if(!selectedFiles.length){ alert('Pilih file terlebih dahulu.'); return; }
+      // Validasi: setiap file harus punya action
+      const invalid = selectedFiles.find(f=>!f.action);
+      if(invalid){ alert('Ada file yang belum dipilih jenis konversinya.'); return; }
+
+      const area = document.getElementById('processingArea');
+      area.innerHTML = `
+        <div class='bg-white rounded-xl shadow-lg p-8 text-center'>
+          <div class='mb-6'><div class='animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto'></div></div>
+          <h3 class='text-xl font-semibold text-gray-800 mb-2'>Memproses…</h3>
+          <p class='text-gray-600'>Mohon tunggu, kami sedang mengonversi file Anda satu per satu.</p>
+          <div class='mt-6 bg-gray-200 rounded-full h-2'><div id='progressBar' class='bg-blue-600 h-2 rounded-full transition-all duration-300' style='width:0%'></div></div>
+          <p id='progressText' class='mt-2 text-sm text-gray-500'>0/${selectedFiles.length}</p>
+        </div>`;
+
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+
+      const results = []; // { success, filename, download_url, download_filename, error, images }
+      window._lastResults = results;
+
+      for(let i=0;i<selectedFiles.length;i++){
+        const { file, action } = selectedFiles[i];
+        try{
+          const fd = new FormData();
+          fd.append('file', file);
+          fd.append('action', action);
+          const res = await fetch('/convert', { method: 'POST', body: fd });
+          if(!res.ok) throw new Error(`Gagal (${res.status}) ${res.statusText}`);
+          // Backend bisa balas JSON (rekomendasi) berisi {download_url, download_filename} atau {images:[]}
+          const ct = res.headers.get('content-type')||'';
+          if(ct.includes('application/json')){
+            const data = await res.json();
+            if(data.images){
+              results.push({ success:true, filename:file.name, images:data.images });
+            }else{
+              const dlName = data.download_filename || (file.name.replace(/\.[^/.]+$/, '') + '.pdf');
+              results.push({ success:true, filename:file.name, download_url:data.download_url, download_filename:dlName });
+            }
+          }else{
+            // fallback: blob PDF
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const dlName = file.name.replace(/\.[^/.]+$/, '') + (action==='pdf_to_image'?'.zip':'.pdf');
+            results.push({ success:true, filename:file.name, download_url:url, download_filename:dlName });
+          }
+        }catch(err){
+          results.push({ success:false, filename:file.name, error: err.message });
+        }
+        const pct = Math.round(((i+1)/selectedFiles.length)*100);
+        progressBar.style.width = pct+'%';
+        progressText.textContent = `${i+1}/${selectedFiles.length}`;
+      }
+
+      showResults(results);
+    }
+
+    function showResults(results){
+      const area = document.getElementById('processingArea');
+      const ok = results.filter(r=>r.success);
+      const fail = results.filter(r=>!r.success);
+      window._lastResults = results;
+
+      area.innerHTML = `
+        <div class='bg-white rounded-xl shadow-lg p-8 text-center'>
+          <div class='mb-6'><div class='bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto'>
+            <svg class='w-8 h-8 text-green-600' viewBox='0 0 24 24' fill='currentColor'><path d='M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.41,10.09L6,11.5L11,16.5Z'/></svg>
+          </div></div>
+          <h3 class='text-xl font-semibold text-gray-800 mb-2'>Selesai!</h3>
+          <p class='text-gray-600 mb-6'>Hasil konversi Anda siap diunduh.</p>
+          ${ok.length?`<div class='space-y-3 mb-6'>
+            <h4 class='text-lg font-medium text-gray-800'>Berhasil (${ok.length})</h4>
+            ${ok.map(f=>{
+              if(f.images){
+                return `<div class='p-3 bg-green-50 rounded-lg text-left'>
+                  <div class='font-medium text-gray-800 mb-2'>${f.filename} → Gambar</div>
+                  ${f.images.map((u,i)=>`<div class='flex items-center justify-between p-2 bg-white rounded border mb-2'>
+                    <span class='text-sm text-gray-700'>Halaman ${i+1}</span>
+                    <a href='${u}' download class='px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700'>Unduh</a>
+                  </div>`).join('')}
+                </div>`;
+              }
+              return `<div class='flex items-center justify-between p-3 bg-green-50 rounded-lg'>
+                <span class='text-gray-800'>${f.download_filename||f.filename}</span>
+                <a href='${f.download_url}' download='${f.download_filename||''}' class='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm'>Unduh</a>
+              </div>`;
+            }).join('')}
+          </div>`:''}
+          ${fail.length?`<div class='space-y-3 mb-6'>
+            <h4 class='text-lg font-medium text-red-600'>Gagal (${fail.length})</h4>
+            ${fail.map(f=>`<div class='flex items-center justify-between p-3 bg-red-50 rounded-lg'>
+              <span class='text-red-600 font-medium'>${f.filename}</span>
+              <span class='text-red-600 text-sm'>${f.error}</span>
+            </div>`).join('')}
+          </div>`:''}
+          <div class='flex flex-wrap items-center justify-center gap-3'>
+            <button onclick='startOver()' class='bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium'>Konversi Lagi</button>
+            ${ok.length?`<button onclick='downloadAll()' class='bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium'>Unduh Semua (.zip)</button>`:''}
+          </div>
+          <p id='zipStatus' class='text-sm text-gray-500 mt-3'></p>
+        </div>`;
+    }
+
+    async function downloadAll(){
+      const ok = (window._lastResults||[]).filter(r=>r.success);
+      if(!ok.length) return;
+      const zip = new JSZip();
+      const status = document.getElementById('zipStatus');
+      status.textContent = 'Menyiapkan arsip…';
+      let counter = 0;
+      for(const item of ok){
+        if(item.images){
+          const folder = zip.folder((item.filename||'pdf')+'_images');
+          for(let i=0;i<item.images.length;i++){
+            const url = item.images[i];
+            const resp = await fetch(url);
+            const blob = await resp.blob();
+            const arrbuf = await blob.arrayBuffer();
+            folder.file(`page-${i+1}.png`, arrbuf);
+            counter++;
+            status.textContent = `Menambahkan file ke zip… (${counter})`;
+          }
+        }else{
+          const url = item.download_url;
+          const resp = await fetch(url);
+          const blob = await resp.blob();
+          const arrbuf = await blob.arrayBuffer();
+          const name = item.download_filename || (item.filename||'file.pdf');
+          zip.file(name, arrbuf);
+          counter++;
+          status.textContent = `Menambahkan file ke zip… (${counter})`;
+        }
+      }
+      const zipped = await zip.generateAsync({type:'blob'});
+      const zurl = URL.createObjectURL(zipped);
+      const a = document.createElement('a');
+      a.href = zurl;
+      a.download = 'konversi-semua.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(zurl);
+      status.textContent = 'Zip siap diunduh.';
+    }
+
+    function startOver(){ selectedFiles=[]; document.getElementById('processingArea').classList.add('hidden'); document.getElementById('fileInput').value=''; }
+  </script>
+</body>
+</html>

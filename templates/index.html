@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Converter Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <!-- Hero -->
+  <section class="bg-indigo-600 text-white py-8 text-center">
+    <h1 class="text-3xl md:text-4xl font-bold">PDF Converter Pro</h1>
+    <p class="mt-2 text-sm md:text-base px-4">Upload file campuran → Konversi → Preview & Download</p>
+  </section>
+
+  <!-- Upload -->
+  <section class="container mx-auto px-4 py-8">
+    <div id="dropZone" class="border-2 border-dashed border-gray-400 bg-white p-8 md:p-12 rounded-lg text-center cursor-pointer transition hover:bg-gray-50">
+      <p class="text-gray-600 text-sm md:text-base">Tap / drag & drop file di sini</p>
+      <input type="file" id="fileInput" multiple hidden>
+    </div>
+
+    <!-- File list -->
+    <div id="processingArea" class="hidden mt-6">
+      <h2 class="text-lg md:text-xl font-semibold mb-4">File yang dipilih</h2>
+      <div id="fileList" class="space-y-2 mb-4"></div>
+      <div class="flex flex-col md:flex-row gap-3">
+        <button onclick="convertFiles()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full md:w-auto">Convert</button>
+        <button onclick="clearFiles()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded w-full md:w-auto">Clear All</button>
+      </div>
+    </div>
+
+    <!-- Hasil -->
+    <div id="resultArea" class="hidden mt-10">
+      <h2 class="text-lg md:text-xl font-semibold mb-4">Hasil Konversi</h2>
+
+      <!-- 📱 Mobile: tampil card -->
+      <div id="resultCards" class="space-y-4 md:hidden"></div>
+
+      <!-- 💻 Desktop: tampil tabel -->
+      <div class="hidden md:block overflow-x-auto">
+        <table class="min-w-full bg-white rounded shadow text-sm md:text-base">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="px-3 md:px-4 py-2 text-left">Nama File</th>
+              <th class="px-3 md:px-4 py-2 text-left">Tipe</th>
+              <th class="px-3 md:px-4 py-2 text-left">Status</th>
+              <th class="px-3 md:px-4 py-2 text-center">Preview</th>
+              <th class="px-3 md:px-4 py-2 text-center">Download</th>
+            </tr>
+          </thead>
+          <tbody id="resultTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Tombol aksi -->
+      <div id="actionButtons" class="mt-6 flex flex-col md:flex-row justify-center gap-3">
+        <button onclick="refreshPage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full md:w-auto">
+          🔄 Refresh Website
+        </button>
+        <button id="downloadAllBtn" onclick="downloadAll()" class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full md:w-auto">
+          ⬇️ Download All
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-gray-800 text-white text-center py-4 text-sm md:text-base">
+    <p>© 2024 PDF Converter Pro</p>
+  </footer>
+
+<script>
+let selectedFiles = [];
+let successFiles = [];
+const EXTENSION_TO_ACTION = {
+  'doc': 'docx_to_pdf','docx': 'docx_to_pdf',
+  'xls': 'excel_to_pdf','xlsx': 'excel_to_pdf',
+  'ppt': 'powerpoint_to_pdf','pptx': 'powerpoint_to_pdf',
+  'jpg': 'image_to_pdf','jpeg': 'image_to_pdf','png': 'image_to_pdf',
+  'txt': 'text_to_pdf','html': 'html_to_pdf','pdf': 'pdf_to_image'
+};
+const EXTENSION_TO_TYPE = {
+  'doc': 'Word','docx': 'Word',
+  'xls': 'Excel','xlsx': 'Excel',
+  'ppt': 'PowerPoint','pptx': 'PowerPoint',
+  'jpg': 'Image','jpeg': 'Image','png': 'Image',
+  'txt': 'Text','html': 'HTML','pdf': 'PDF'
+};
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('bg-gray-200'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-gray-200'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('bg-gray-200'); handleFiles(Array.from(e.dataTransfer.files)); });
+fileInput.addEventListener('change', e => handleFiles(Array.from(e.target.files)));
+
+function handleFiles(files) {
+  selectedFiles = [...selectedFiles, ...files];
+  displayFiles();
+  document.getElementById('processingArea').classList.remove('hidden');
+}
+
+function displayFiles() {
+  const fileList = document.getElementById('fileList');
+  fileList.innerHTML = '';
+  selectedFiles.forEach((file, i) => {
+    fileList.innerHTML += `
+      <div class="flex justify-between items-center bg-gray-50 p-3 rounded">
+        <span>${file.name}</span>
+        <button onclick="removeFile(${i})" class="text-red-600 hover:text-red-800">Remove</button>
+      </div>`;
+  });
+}
+
+function removeFile(i) {
+  selectedFiles.splice(i, 1);
+  displayFiles();
+  if (selectedFiles.length === 0) document.getElementById('processingArea').classList.add('hidden');
+}
+
+function clearFiles() {
+  selectedFiles = [];
+  document.getElementById('fileList').innerHTML = '';
+  document.getElementById('processingArea').classList.add('hidden');
+  fileInput.value = '';
+}
+
+function refreshPage() {
+  location.reload();
+}
+
+async function convertFiles() {
+  const tableBody = document.getElementById('resultTableBody');
+  const cardBody = document.getElementById('resultCards');
+  tableBody.innerHTML = '';
+  cardBody.innerHTML = '';
+  document.getElementById('resultArea').classList.remove('hidden');
+  successFiles = [];
+
+  for (const file of selectedFiles) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const action = EXTENSION_TO_ACTION[ext];
+    const fileType = EXTENSION_TO_TYPE[ext] || 'Unknown';
+    if (!action) continue;
+
+    // buat row/table + card/mobile
+    const rowId = "row_" + Math.random().toString(36).substring(2, 9);
+
+    // desktop row
+    tableBody.innerHTML += `
+      <tr id="${rowId}" class="border-t">
+        <td class="px-3 py-2">${file.name}</td>
+        <td class="px-3 py-2">${fileType}</td>
+        <td class="px-3 py-2"><span class="text-blue-600">Proses...</span></td>
+        <td class="px-3 py-2 text-center">-</td>
+        <td class="px-3 py-2 text-center">-</td>
+      </tr>`;
+
+    // mobile card
+    cardBody.innerHTML += `
+      <div id="card_${rowId}" class="bg-white rounded shadow p-4">
+        <p class="font-semibold">${file.name}</p>
+        <p class="text-sm text-gray-600">Tipe: ${fileType}</p>
+        <p id="status_${rowId}" class="mt-2 text-blue-600">Proses...</p>
+        <div class="flex justify-between mt-3 text-sm">
+          <span id="preview_${rowId}" class="text-gray-400">Preview: -</span>
+          <span id="download_${rowId}" class="text-gray-400">Download: -</span>
+        </div>
+      </div>`;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('action', action);
+
+    try {
+      const res = await fetch('/convert', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      const row = document.getElementById(rowId);
+      const cardStatus = document.getElementById("status_"+rowId);
+      const cardPrev = document.getElementById("preview_"+rowId);
+      const cardDown = document.getElementById("download_"+rowId);
+
+      if (data.results && data.results[0].success) {
+        const previewUrl = data.results[0].preview_url;
+        const downloadFilename = data.results[0].download_filename;
+        const downloadUrl = "/output/" + downloadFilename;
+        successFiles.push(downloadFilename);
+
+        row.innerHTML = `
+          <td class="px-3 py-2">${file.name}</td>
+          <td class="px-3 py-2">${fileType}</td>
+          <td class="px-3 py-2 text-green-600">Sukses</td>
+          <td class="px-3 py-2 text-center"><a href="${previewUrl}" target="_blank" class="text-blue-600">Preview</a></td>
+          <td class="px-3 py-2 text-center"><a href="${downloadUrl}" download class="text-indigo-600">Download</a></td>`;
+        cardStatus.innerHTML = `<span class="text-green-600">Sukses</span>`;
+        cardPrev.innerHTML = `<a href="${previewUrl}" target="_blank" class="text-blue-600">Preview</a>`;
+        cardDown.innerHTML = `<a href="${downloadUrl}" download class="text-indigo-600">Download</a>`;
+
+      } else {
+        row.querySelector("td:nth-child(3)").innerHTML = `<span class="text-red-600">Gagal</span>`;
+        cardStatus.innerHTML = `<span class="text-red-600">Gagal</span>`;
+      }
+    } catch {
+      document.getElementById("status_"+rowId).innerHTML = `<span class="text-red-600">Error</span>`;
+    }
+  }
+
+  if (successFiles.length > 1) {
+    document.getElementById('downloadAllBtn').classList.remove('hidden');
+  }
+}
+
+async function downloadAll() {
+  const res = await fetch('/download_selected', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files: successFiles })
+  });
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "converted_files.zip";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
